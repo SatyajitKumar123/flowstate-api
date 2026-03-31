@@ -2,8 +2,9 @@ FROM ghcr.io/astral-sh/uv:python3.13-alpine AS builder
 
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
+ENV UV_LINK_MODE=copy
 
-RUN uv pip install --system -r pyproject.toml
+RUN uv pip install --system .
 
 FROM python:3.13-alpine AS runtime
 

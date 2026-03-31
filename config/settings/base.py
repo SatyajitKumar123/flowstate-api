@@ -1,0 +1,92 @@
+from pathlib import Path
+import os
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# Import pydantic settings
+from .pydantic_settings import DjangoSettings, DatabaseSettings, EmailSettings
+
+django_settings = DjangoSettings()
+db_settings = DatabaseSettings()
+email_settings = EmailSettings()
+
+# Security
+DEBUG = django_settings.DJANGO_DEBUG
+SECRET_KEY = django_settings.DJANGO_SECRET_KEY
+ALLOWED_HOSTS = django_settings.ALLOWED_HOSTS_LIST
+
+# Core Config
+ROOT_URLCONF = "config.urls"
+WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
+
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "UTC"
+USE_I18N = True
+USE_TZ = True
+
+STATIC_URL = "static/"
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Installed Apps
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    # Third party
+    "rest_framework",
+    "corsheaders",
+    # Local apps
+    "apps.core",
+]
+
+# Middleware
+MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+# TEMPLATES (This was missing)
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    },
+]
+
+# Database
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": db_settings.POSTGRES_DB,
+        "USER": db_settings.POSTGRES_USER,
+        "PASSWORD": db_settings.POSTGRES_PASSWORD,
+        "HOST": db_settings.POSTGRES_HOST,
+        "PORT": str(db_settings.POSTGRES_PORT),
+    }
+}
+
+# Email
+EMAIL_HOST = email_settings.EMAIL_HOST
+EMAIL_PORT = email_settings.EMAIL_PORT
+EMAIL_HOST_USER = email_settings.EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD = email_settings.EMAIL_HOST_PASSWORD
+EMAIL_USE_TLS = email_settings.EMAIL_USE_TLS
