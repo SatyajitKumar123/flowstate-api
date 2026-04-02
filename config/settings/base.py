@@ -41,7 +41,10 @@ INSTALLED_APPS = [
     "corsheaders",
     # Local apps
     "apps.core",
+    "apps.users",
 ]
+
+AUTH_USER_MODEL = "apps.users.User"
 
 # Middleware
 MIDDLEWARE = [
