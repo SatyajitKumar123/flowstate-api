@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     "apps.users",
 ]
 
-AUTH_USER_MODEL = "apps.users.User"
+AUTH_USER_MODEL = "users.User"
 
 # Middleware
 MIDDLEWARE = [
