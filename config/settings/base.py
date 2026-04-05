@@ -90,6 +90,9 @@ DATABASES = {
 }
 
 # Email
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend" # For Development
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend" # For Production
+
 EMAIL_HOST = email_settings.EMAIL_HOST
 EMAIL_PORT = email_settings.EMAIL_PORT
 EMAIL_HOST_USER = email_settings.EMAIL_HOST_USER
