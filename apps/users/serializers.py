@@ -1,4 +1,8 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 from rest_framework import serializers
 
 
@@ -38,3 +42,97 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ("id", "email", "first_name", "last_name", "phone_number", "created_at")
         read_only_fields = ("id", "created_at")
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """Request password reset email."""
+
+    email = serializers.EmailField(required=True)
+
+    def validate_email(self, value):
+        from apps.users.models import User
+        
+        if not User.objects.filter(email=value).exists():
+            return value
+        return value
+    
+    def save(self):
+        from apps.users.models import User
+        from django.conf import settings
+        import logging
+        logger = logging.getLogger(__name__)
+
+        email = self.validated_data["email"]
+        user = User.objects.filter(email=email).first()
+
+        if user:
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            
+            # Ensure uid is string (Django 6.0 compatibility)
+            if isinstance(uid, bytes):
+                uid = uid.decode()
+            
+            # DEBUG: Log the EXACT values
+            logger.warning(f"=== PASSWORD RESET DEBUG ===")
+            logger.warning(f"User: {user.email} (pk={user.pk})")
+            logger.warning(f"UID: {uid}")
+            logger.warning(f"TOKEN: {token}")
+            logger.warning(f"TOKEN LENGTH: {len(token)}")
+            logger.warning(f"Password Hash: {user.password[:30]}...")
+            
+            reset_url = f"http://localhost:3000/reset-password/{uid}/{token}/"
+            logger.warning(f"RESET URL: {reset_url}")
+            logger.warning(f"=== END DEBUG ===")
+
+            send_mail(
+                subject="Password Reset Request",
+                message=f"Click here to reset your password: {reset_url}",
+                from_email="noreply@flowstate.dev",
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+            
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """Confirm password reset with token."""
+
+    uid = serializers.CharField(required=True)
+    token = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, min_length=8, write_only=True)
+
+    def validate(self, data):
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.http import urlsafe_base64_decode
+        from apps.users.models import User
+        
+        try:
+            uid = urlsafe_base64_decode(data["uid"]).decode()
+            user = User.objects.get(pk=uid)
+        except (User.DoesNotExist, ValueError, TypeError):
+            raise serializers.ValidationError("Invalid token or user ID")
+
+        if not default_token_generator.check_token(user, data["token"]):
+            raise serializers.ValidationError("Invalid or expired token")
+
+        self.user = user
+        return data
+
+    def save(self):
+        self.user.set_password(self.validated_data["new_password"])
+        self.user.save()
+        return self.user
+    
+class ChangePasswordSerializer(serializers.Serializer):
+    """change password for authenticated user."""
+
+    current_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=True, min_length=8, write_only=True)
+
+    def validate_current_password(self, value):
+        if not self.context["request"].user.check_password(value):
+            raise serializers.ValidationError("Current password is incorrect")
+        return value
+    
+    def validate_new_password(self, value):
+        if len(value) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters")
+        return value
