@@ -74,7 +74,7 @@ class PasswordResetConfirmView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exeption=True)
+        serializer.is_valid(raise_exception=True)
         serializer.save()
         
         return Response(
@@ -93,7 +93,7 @@ class ChangePasswordView(generics.UpdateAPIView):
     
     def update(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_execption=True)
+        serializer.is_valid(raise_exception=True)
 
         user = request.user
         user.set_password(serializer.validated_data["new_password"])

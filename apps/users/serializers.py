@@ -1,7 +1,7 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.utils.http import urlsafe_base64_decode
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from rest_framework import serializers
 
@@ -57,14 +57,32 @@ class PasswordResetRequestSerializer(serializers.Serializer):
     
     def save(self):
         from apps.users.models import User
-        
+        from django.conf import settings
+        import logging
+        logger = logging.getLogger(__name__)
+
         email = self.validated_data["email"]
         user = User.objects.filter(email=email).first()
-        
+
         if user:
             token = default_token_generator.make_token(user)
-            uid = urlsafe_base64_decode(force_bytes(user.pk))
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            
+            # Ensure uid is string (Django 6.0 compatibility)
+            if isinstance(uid, bytes):
+                uid = uid.decode()
+            
+            # DEBUG: Log the EXACT values
+            logger.warning(f"=== PASSWORD RESET DEBUG ===")
+            logger.warning(f"User: {user.email} (pk={user.pk})")
+            logger.warning(f"UID: {uid}")
+            logger.warning(f"TOKEN: {token}")
+            logger.warning(f"TOKEN LENGTH: {len(token)}")
+            logger.warning(f"Password Hash: {user.password[:30]}...")
+            
             reset_url = f"http://localhost:3000/reset-password/{uid}/{token}/"
+            logger.warning(f"RESET URL: {reset_url}")
+            logger.warning(f"=== END DEBUG ===")
 
             send_mail(
                 subject="Password Reset Request",
