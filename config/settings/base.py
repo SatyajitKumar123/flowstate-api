@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     # Local apps
     "apps.core",
     "apps.users",
+    "apps.workspaces",
+    "apps.projects",
 ]
 
 AUTH_USER_MODEL = "users.User"
