@@ -76,7 +76,7 @@ class Membership(models.Model):
         ]
         indexes = [
             models.Index(fields=["user", "role"]),
-            models.index(fields=["workspace", "role"]),
+            models.Index(fields=["workspace", "role"]),
         ]
     
     def __str__(self) -> str:
