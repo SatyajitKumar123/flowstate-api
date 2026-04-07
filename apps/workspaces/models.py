@@ -44,3 +44,40 @@ class Workspace(models.Model):
             base = self.name.lower().replace(" ", "-")
             self.slug = f"{base}-{uuid.uuid4().hex[:8]}"
         super().save(*args, **kwargs)
+        
+class MembershipRole(models.TextChoices):
+    ADMIN = "admin", _("Admin")
+    MEMBER = "member", _("Member")
+    VIEWER = "viewer", _("Viewer")
+
+class Membership(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name="memberships")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="workspace_memberships"
+    )
+    role = models.CharField(
+        max_length=10,
+        choices=MembershipRole.choices,
+        default=MembershipRole.VIEWER
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "workspace_memberships"
+        verbose_name = _("Membership")
+        verbose_name_plural = _("Memberships")
+        ordering = ["-created_at"]
+        constraints = [
+            UniqueConstraint(fields=["workspace", "user"], name="uq_membership_workspace_user"),
+        ]
+        indexes = [
+            models.Index(fields=["user", "role"]),
+            models.index(fields=["workspace", "role"]),
+        ]
+    
+    def __str__(self) -> str:
+        return f"{self.user.email} → {self.workspace.name} ({self.role})"
