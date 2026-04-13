@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "apps.users",
     "apps.workspaces",
     "apps.projects",
+    "apps.tasks",
 ]
 
 AUTH_USER_MODEL = "users.User"
