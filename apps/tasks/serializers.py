@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from apps.automation.tasks import notify_status_change
+
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 
@@ -48,6 +50,18 @@ class TaskSerializer(serializers.ModelSerializer):
 
         instance = super().update(instance, validated_data)
         actor = self.context["request"].user
+
+        # Trigger async notification on status change
+        for change in tracked_changes:
+            if change["field"] == "status":
+                notify_status_change.delay(
+                    str(instance.id),
+                    actor.id,
+                    change["old"],
+                    change["new"],
+                )
+
+        # Create audit records
         for change in tracked_changes:
             TaskHistory.objects.create(
                 task=instance,

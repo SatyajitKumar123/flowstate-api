@@ -92,6 +92,21 @@ DATABASES = {
     }
 }
 
+# Celery configuration
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://redis:6379/1")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "UTC"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_ACKS_LATE = True  # Guarantees task execution even if worker crashes mid-job
+CELERY_WORKER_CONCURRENCY = int(os.environ.get("CELERY_WORKER_CONCURRENCY", "4"))
+CELERY_TASK_DEFAULT_QUEUE = "default"
+CELERY_TASK_DEFAULT_EXCHANGE = "default"
+CELERY_TASK_DEFAULT_ROUTING_KEY = "default"
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
 # Email
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend" # For Development
 # EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend" # For Production

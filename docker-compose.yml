@@ -10,6 +10,18 @@ services:
     ports:
       - "5432:5432"
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   web:
     build:
       context: .
@@ -20,9 +32,29 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_started
+      redis:
+        condition: service_healthy
     env_file:
       - .env
 
+  worker:
+    build:
+      context: .
+      target: runtime
+    command: uv run celery -A config worker --loglevel=info --concurrency=4
+    volumes:
+      - .:/app
+    depends_on:
+      web:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  redis_data:
