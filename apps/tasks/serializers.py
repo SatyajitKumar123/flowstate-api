@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 from apps.automation.tasks import notify_status_change
 
 from rest_framework import serializers
@@ -35,6 +38,27 @@ class TaskSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"assignee": "User must be a member of this workspace."})
         return attrs
 
+    def _broadcast(self, instance: Task, action: str) -> None:
+        channel_layer = get_channel_layer()
+        group = f"workspace_{instance.project.workspace_id}"
+        async_to_sync(channel_layer.group_send)(
+            group,
+            {
+                "type": "task.update",
+                "payload": {
+                    "action": action,
+                    "task_id": str(instance.id),
+                    "workspace_id": str(instance.project.workspace_id),
+                    "project_id": str(instance.project_id),
+                    "title": instance.title,
+                    "status": instance.status,
+                    "priority": instance.priority,
+                    "assignee_id": str(instance.assignee_id) if instance.assignee else None,
+                    "updated_at": instance.updated_at.isoformat(),
+                },
+            },
+        )
+        
     def update(self, instance: Task, validated_data: dict[str, any]) -> Task:
         tracked_changes = []
         for field in ("status", "assignee", "due_date"):
@@ -70,11 +94,15 @@ class TaskSerializer(serializers.ModelSerializer):
                 old_value=change["old"],
                 new_value=change["new"],
             )
+        self._broadcast(instance, "updated")
         return instance
 
     def create(self, validated_data: dict[str, any]) -> Task:
         validated_data["reporter"] = self.context["request"].user
-        return super().create(validated_data)
+        instance = super().create(validated_data)
+        self._broadcast(instance, "created")
+        return instance
+    
 
 
 class TaskHistorySerializer(serializers.ModelSerializer):
