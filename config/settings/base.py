@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
+    "channels",
     # Local apps
     "apps.core",
     "apps.users",
@@ -140,4 +141,48 @@ SIMPLE_JWT = {
     "USER_ID_CLAIM": "user_id",
     "TOKEN_TYPE_CLAIM": "token_type",
     "JTI_CLAIM": "jti",
+}
+
+# CORS Settings for Development
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:3001",  # ← Your current frontend port
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+]
+
+# Allow credentials (cookies, auth headers)
+CORS_ALLOW_CREDENTIALS = True
+
+# Optional: Allow all headers & methods during dev
+CORS_ALLOW_ALL_ORIGINS = False  # Keep False for security
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)],
+            "capacity": 1500,
+            "expiry": 10,
+        },
+    },
 }
