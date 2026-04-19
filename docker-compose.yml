@@ -26,7 +26,7 @@ services:
     build:
       context: .
       target: runtime
-    command: python manage.py runserver 0.0.0.0:8000
+    # command: uv run uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --reload --reload-dir /app
     volumes:
       - .:/app
     ports:
@@ -43,11 +43,11 @@ services:
     build:
       context: .
       target: runtime
-    command: uv run celery -A config worker --loglevel=info --concurrency=4
+    command: celery -A config worker --loglevel=info --concurrency=4
     volumes:
       - .:/app
     depends_on:
-      web:
+      db:
         condition: service_started
       redis:
         condition: service_healthy
