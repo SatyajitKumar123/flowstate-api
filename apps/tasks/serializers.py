@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .utils import broadcast_task_update
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
@@ -94,13 +95,13 @@ class TaskSerializer(serializers.ModelSerializer):
                 old_value=change["old"],
                 new_value=change["new"],
             )
-        self._broadcast(instance, "updated")
+        broadcast_task_update(instance, "updated", self.data)
         return instance
 
     def create(self, validated_data: dict[str, any]) -> Task:
         validated_data["reporter"] = self.context["request"].user
         instance = super().create(validated_data)
-        self._broadcast(instance, "created")
+        broadcast_task_update(instance, "created", self.data)
         return instance
     
 
