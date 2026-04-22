@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "apps.workspaces",
     "apps.projects",
     "apps.tasks",
+    "apps.webhooks",
 ]
 
 AUTH_USER_MODEL = "users.User"
