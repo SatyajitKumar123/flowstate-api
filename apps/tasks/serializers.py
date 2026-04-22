@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from .utils import broadcast_task_update
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -60,7 +61,7 @@ class TaskSerializer(serializers.ModelSerializer):
             },
         )
         
-    def update(self, instance: Task, validated_data: dict[str, any]) -> Task:
+    def update(self, instance: Task, validated_data: dict[str, Any]) -> Task:
         tracked_changes = []
         for field in ("status", "assignee", "due_date"):
             if field in validated_data:
@@ -98,7 +99,7 @@ class TaskSerializer(serializers.ModelSerializer):
         broadcast_task_update(instance, "updated", self.data)
         return instance
 
-    def create(self, validated_data: dict[str, any]) -> Task:
+    def create(self, validated_data: dict[str, Any]) -> Task:
         validated_data["reporter"] = self.context["request"].user
         instance = super().create(validated_data)
         broadcast_task_update(instance, "created", self.data)
